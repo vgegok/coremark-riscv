@@ -36,7 +36,7 @@ endif
 ifndef CROSS
 
     # ARCH = rv32e
-    # ARCH = rv32i
+    ARCH = rv32i
     
     #TODO: better way to switch little/big-endian:
     #ENDIAN = _le # gcc for little-endian
@@ -56,28 +56,21 @@ ifndef BUILD
     BUILD = $(shell date -R)
 endif
 
-#     CC = $(CCPATH)/$(CROSS)-gcc
-#     AS = $(CCPATH)/$(CROSS)-as
-#     LD = $(CCPATH)/$(CROSS)-ld
-#     OC = $(CCPATH)/$(CROSS)-objcopy
-#     OD = $(CCPATH)/$(CROSS)-objdump
-#    CPP = $(CCPATH)/$(CROSS)-cpp
-
-    CC = gcc
-    AS = as
-    LD = ld
-    OC = objcopy
-    OD = objdump
-   CPP = cpp
+    CC = $(CCPATH)/$(CROSS)-gcc
+    AS = $(CCPATH)/$(CROSS)-as
+    LD = $(CCPATH)/$(CROSS)-ld
+    OC = $(CCPATH)/$(CROSS)-objcopy
+    OD = $(CCPATH)/$(CROSS)-objdump
+   CPP = $(CCPATH)/$(CROSS)-cpp
 
 # CCFLAGS = -Wall -fcommon -ffreestanding -I../include -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DBUILD="\"$(BUILD)\"" -DARCH="\"$(ARCH)\""
 # CCFLAGS = -Wall -fcommon -ffreestanding -I../include -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DITERATIONS=0 -DARCH="\"$(ARCH)\""
-CCFLAGS = -DFLAGS_STR=\""-O2 -DPERFORMANCE_RUN=1"\" -DITERATIONS=0 -DPERFORMANCE_RUN=1
+CCFLAGS = -DFLAGS_STR=\""-O2 -DPERFORMANCE_RUN=1"\" -DITERATIONS=0 -DPERFORMANCE_RUN=1 -I../include -I. -I./src -O2 -march=$(ARCH) -mabi=ilp32e
 # ASFLAGS = -march=$(ARCH)
-LDFLAGS = -T$(PROJ).ld -Map=$(PROJ).map
+LDFLAGS = -T$(PROJ).ld -Map=$(PROJ).map -m elf32lriscv # -Ttext=0
 CPFLAGS = -P 
 
-# CCFLAGS += -mcmodel=medany -mexplicit-relocs # relocable clode
+CCFLAGS += -mcmodel=medany -mexplicit-relocs # relocable clode
 
 ifdef HARVARD
 	CPFLAGS +=  -DHARVARD=1
@@ -87,19 +80,19 @@ OCFLAGS = -O binary # --reverse-bytes=4 # workaround for darkriscv big-endian bl
 ODFLAGS = -d
 
 PROJ = coremark
-# OBJS = core_main.o core_matrix.o core_list_join.o core_portme.o core_state.o core_util.o ../common/stdio.o ../common/io.o ../common/banner.o ../common/boot.o
-# ASMS = core_main.s core_matrix.s core_list_join.s core_portme.s core_state.s core_util.s ../common/stdio.s ../common/io.s ../common/banner.s 
-# SRCS = core_main.c core_matrix.c core_list_join.c core_portme.c core_state.c core_util.c ../common/stdio.c ../common/io.c ../common/banner.c ../common/boot.s
+OBJS = ./src/core_main.o ./src/core_matrix.o ./src/core_list_join.o ./src/core_state.o ./src/core_util.o core_portme.o ../common/stdio.o ../common/io.o ../common/banner.o ../common/boot.o
+ASMS = ./src/core_main.s ./src/core_matrix.s ./src/core_list_join.s ./src/core_state.s ./src/core_util.s core_portme.s ../common/stdio.s ../common/io.s ../common/banner.s 
+SRCS = ./src/core_main.c ./src/core_matrix.c ./src/core_list_join.c ./src/core_state.c ./src/core_util.c core_portme.c ../common/stdio.c ../common/io.c ../common/banner.c ../common/boot.s
 
 
-OBJS = core_main.o core_matrix.o core_list_join.o core_portme.o core_state.o core_util.o 
-ASMS = core_main.s core_matrix.s core_list_join.s core_portme.s core_state.s core_util.s 
-SRCS = core_main.c core_matrix.c core_list_join.c core_portme.c core_state.c core_util.c 
+# OBJS = ./src/core_main.o ./src/core_matrix.o ./src/core_list_join.o ./src/core_state.o ./src/core_util.o core_portme.o 
+# ASMS = ./src/core_main.s ./src/core_matrix.s ./src/core_list_join.s ./src/core_state.s ./src/core_util.s core_portme.s 
+# SRCS = ./src/core_main.c ./src/core_matrix.c ./src/core_list_join.c ./src/core_state.c ./src/core_util.c core_portme.c 
 
 
 #include app/Makefile.in
 
-DEPS = $(SRCS) $(ASMS) $(OBJS) $(PROJ).ld $(PROJ).ld.src
+DEPS = $(SRCS) $(ASMS) $(OBJS) $(PROJ).ld $(PROJ).lds
 
 ifdef HARVARD
 	TARGETS = $(PROJ).rom.mem $(PROJ).ram.mem
@@ -113,7 +106,7 @@ all: $(TARGETS) $(DEPS)
 	@echo sources ok.
 
 clean:
-	-rm $(ASMS) $(OBJS) $(PROJ) $(PROJ).{s,bin,lst,map,ram,rom,x86,text,data,bin,ld,o,mem,ram.mem,rom.mem}
+	-rm $(ASMS) $(OBJS) $(PROJ).{s,bin,lst,map,ram,rom,x86,text,data,bin,ld,o,mem,ram.mem,rom.mem}
 
 %.o: %.s Makefile
 	$(AS) $(ASFLAGS) -c $< -o $@
@@ -121,8 +114,8 @@ clean:
 %.s: %.c Makefile
 	$(CC) $(CCFLAGS) -S $< -o $@
 
-$(PROJ).ld: $(PROJ).ld.src
-	$(CPP) $(CPFLAGS) $(PROJ).ld.src $(PROJ).ld
+$(PROJ).ld: $(PROJ).lds
+	$(CPP) $(CPFLAGS) $(PROJ).lds$(PROJ).ld
 	
 $(PROJ).o: $(OBJS) $(PROJ).ld
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
