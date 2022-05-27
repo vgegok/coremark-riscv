@@ -15,7 +15,6 @@ limitations under the License.
 
 Original Author: Shay Gal-on
 */
-
 /* Topic : Description
         This file contains configuration constants required to execute on
    different platforms
@@ -36,34 +35,28 @@ Original Author: Shay Gal-on
         and implementation of functions thereof.
 */
 #ifndef HAS_TIME_H
-#define HAS_TIME_H 0
+#define HAS_TIME_H 1
 #endif
 /* Configuration : USE_CLOCK
         Define to 1 if platform has the time.h header file,
         and implementation of functions thereof.
 */
 #ifndef USE_CLOCK
-#define USE_CLOCK 0
+#define USE_CLOCK 1
 #endif
 /* Configuration : HAS_STDIO
         Define to 1 if the platform has stdio.h.
 */
 #ifndef HAS_STDIO
-#define HAS_STDIO 1
+#define HAS_STDIO 0
 #endif
 /* Configuration : HAS_PRINTF
         Define to 1 if the platform has stdio.h and implements the printf
    function.
 */
 #ifndef HAS_PRINTF
-#define HAS_PRINTF 1
+#define HAS_PRINTF 0
 #endif
-
-/* Configuration : CORE_TICKS
-        Define type of return from the timing functions.
- */
-#include <time.h>
-typedef clock_t CORE_TICKS;
 
 /* Definitions : COMPILER_VERSION, COMPILER_FLAGS, MEM_LOCATION
         Initialize these strings per platform
@@ -99,11 +92,18 @@ typedef unsigned char  ee_u8;
 typedef unsigned int   ee_u32;
 typedef ee_u32         ee_ptr_int;
 typedef size_t         ee_size_t;
+#define NULL ((void *)0)
 /* align_mem :
         This macro is used to align an offset to point to a 32b value. It is
    used in the Matrix algorithm to initialize the input memory blocks.
 */
 #define align_mem(x) (void *)(4 + (((ee_ptr_int)(x)-1) & ~3))
+
+/* Configuration : CORE_TICKS
+        Define type of return from the timing functions.
+ */
+#define CORETIMETYPE ee_u32
+typedef ee_u32 CORE_TICKS;
 
 /* Configuration : SEED_METHOD
         Defines method to get seed values that cannot be computed at compile
@@ -166,7 +166,7 @@ typedef size_t         ee_size_t;
    greater then 1.
 */
 #ifndef MAIN_HAS_NOARGC
-#define MAIN_HAS_NOARGC 1
+#define MAIN_HAS_NOARGC 0
 #endif
 
 /* Configuration : MAIN_HAS_NORETURN
@@ -204,5 +204,7 @@ void portable_fini(core_portable *p);
 #define VALIDATION_RUN 1
 #endif
 #endif
+
+int ee_printf(const char *fmt, ...);
 
 #endif /* CORE_PORTME_H */

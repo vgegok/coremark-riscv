@@ -65,8 +65,8 @@ endif
 
 # CCFLAGS = -Wall -fcommon -ffreestanding -I../include -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DBUILD="\"$(BUILD)\"" -DARCH="\"$(ARCH)\""
 # CCFLAGS = -Wall -fcommon -ffreestanding -I../include -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DITERATIONS=0 -DARCH="\"$(ARCH)\""
-CCFLAGS = -DFLAGS_STR=\""-O2 -DPERFORMANCE_RUN=1"\" -DITERATIONS=0 -DPERFORMANCE_RUN=1 -I../include -I. -I./src -O2 -march=$(ARCH) -mabi=ilp32e
-# ASFLAGS = -march=$(ARCH)
+CCFLAGS = -DFLAGS_STR=\""-O2 -DPERFORMANCE_RUN=1"\" -DITERATIONS=0 -DPERFORMANCE_RUN=1 -I. -I./include -I./src -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__
+ASFLAGS = -march=$(ARCH)
 LDFLAGS = -T$(PROJ).ld -Map=$(PROJ).map -m elf32lriscv # -Ttext=0
 CPFLAGS = -P 
 
@@ -80,9 +80,9 @@ OCFLAGS = -O binary # --reverse-bytes=4 # workaround for darkriscv big-endian bl
 ODFLAGS = -d
 
 PROJ = coremark
-OBJS = ./src/core_main.o ./src/core_matrix.o ./src/core_list_join.o ./src/core_state.o ./src/core_util.o core_portme.o ../common/stdio.o ../common/io.o ../common/banner.o ../common/boot.o
-ASMS = ./src/core_main.s ./src/core_matrix.s ./src/core_list_join.s ./src/core_state.s ./src/core_util.s core_portme.s ../common/stdio.s ../common/io.s ../common/banner.s 
-SRCS = ./src/core_main.c ./src/core_matrix.c ./src/core_list_join.c ./src/core_state.c ./src/core_util.c core_portme.c ../common/stdio.c ../common/io.c ../common/banner.c ../common/boot.s
+OBJS = ./src/core_main.o ./src/core_matrix.o ./src/core_list_join.o ./src/core_state.o ./src/core_util.o core_portme.o ee_printf.o./include/io.o  ./include/boot.o
+ASMS = ./src/core_main.s ./src/core_matrix.s ./src/core_list_join.s ./src/core_state.s ./src/core_util.s core_portme.s ee_printf.s./include/io.s  
+SRCS = ./src/core_main.c ./src/core_matrix.c ./src/core_list_join.c ./src/core_state.c ./src/core_util.c core_portme.c ee_printf.c./include/io.c  ./include/boot.s
 
 
 # OBJS = ./src/core_main.o ./src/core_matrix.o ./src/core_list_join.o ./src/core_state.o ./src/core_util.o core_portme.o 
@@ -115,7 +115,7 @@ clean:
 	$(CC) $(CCFLAGS) -S $< -o $@
 
 $(PROJ).ld: $(PROJ).lds
-	$(CPP) $(CPFLAGS) $(PROJ).lds$(PROJ).ld
+	$(CPP) $(CPFLAGS) $(PROJ).lds $(PROJ).ld
 	
 $(PROJ).o: $(OBJS) $(PROJ).ld
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
