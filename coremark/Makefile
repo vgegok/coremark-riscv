@@ -63,15 +63,13 @@ endif
     OD = $(CCPATH)/$(CROSS)-objdump
    CPP = $(CCPATH)/$(CROSS)-cpp
 
-# CCFLAGS = -Wall -fcommon -ffreestanding -I../include -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DBUILD="\"$(BUILD)\"" -DARCH="\"$(ARCH)\""
-# CCFLAGS = -Wall -fcommon -ffreestanding -I../include -O2 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DITERATIONS=0 -DARCH="\"$(ARCH)\""
 DFLAGS_STR = -DFLAGS_STR=\""-O0 -DPERFORMANCE_RUN=1"\"
-CCFLAGS = -O0 -I. -I./src -I./include $(DFLAGS_STR) -DITERATIONS=0 -DPERFORMANCE_RUN=1 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DBUILD="\"$(BUILD)\"" -DARCH="\"$(ARCH)\""
+CCFLAGS = -Wall -fcommon -ffreestanding -O1 -I. -I./src -I./include $(DFLAGS_STR) -DITERATIONS=300000 -DPERFORMANCE_RUN=1 -march=$(ARCH) -mabi=ilp32e -D__RISCV__ -DBUILD="\"$(BUILD)\"" -DARCH="\"$(ARCH)\""
 ASFLAGS = -march=$(ARCH)
 LDFLAGS = -T$(PROJ).ld -Map=$(PROJ).map -m elf32lriscv # -Ttext=0
 CPFLAGS = -P 
 
-# CCFLAGS += -mcmodel=medany -mexplicit-relocs # relocable clode
+CCFLAGS += -mcmodel=medany -mexplicit-relocs # relocable clode
 
 ifdef HARVARD
 	CPFLAGS +=  -DHARVARD=1

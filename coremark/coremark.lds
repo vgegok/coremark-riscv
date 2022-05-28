@@ -47,7 +47,7 @@
 
 MEMORY
 {
-    IO  (rw!x) : ORIGIN = 0x80000000, LENGTH = 0x10
+    IO  (rw!x) : ORIGIN = 0x80000000, LENGTH = 0x14
 #if HARVARD
     ROM (x!rw) : ORIGIN = 0x00000000, LENGTH = 0x4000
     RAM (rw!x) : ORIGIN = 0x00004000, LENGTH = 0x4000
