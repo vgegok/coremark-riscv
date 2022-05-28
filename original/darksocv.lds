@@ -49,10 +49,10 @@ MEMORY
 {
     IO  (rw!x) : ORIGIN = 0x80000000, LENGTH = 0x10
 #if HARVARD
-    ROM (x!rw) : ORIGIN = 0x00000000, LENGTH = 0x2000
-    RAM (rw!x) : ORIGIN = 0x00002000, LENGTH = 0x2000
+    ROM (x!rw) : ORIGIN = 0x00000000, LENGTH = 0x20000
+    RAM (rw!x) : ORIGIN = 0x00020000, LENGTH = 0x20000
 #else
-    MEM (rwx)  : ORIGIN = 0x00000000, LENGTH = 0x4000
+    MEM (rwx)  : ORIGIN = 0x00000000, LENGTH = 0x40000
 #endif
 }
 

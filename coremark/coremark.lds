@@ -1,109 +1,96 @@
+/* Copyright (c) 2018, Marcelo Samsoniuk
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * 
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * 
+ * * Neither the name of the copyright holder nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
-This is free and unencumbered software released into the public domain.
+    Memory Architectures:
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
+	- Harvard: separate instruction (ROM) and data (RAM), has the
+	  advantage that is possible make the ROM memory readonly, in a way
+	  that bugs in the code cannot destruct the code.  Also, the use of
+	  separate ROM and RAM makes possible share the dual-port ROM and/or
+	  RAM between two cores.
+
+	- Von Neumann: unified instruction and data in a single memory
+	  (MEM), has the advantage that the .text and .data are contigous
+	  and without gaps, which means that the memory is better utilized. 
+	  However, as long there is no physical separation, a bug in the
+	  code can destroy both data and code.  Also, as long both ports of
+	  the dual-port MEM is already in use, there is no way to share to
+	  more than one core.
 */
-OUTPUT_ARCH( "riscv" )
-
-ENTRY( _boot )
 
 MEMORY
 {
-    IO  (rw!x)   : ORIGIN = 0x80000000, LENGTH = 0x10
-    ram (wxa!ri) : ORIGIN = 0x00000000, LENGTH = 0x20000
+    IO  (rw!x) : ORIGIN = 0x80000000, LENGTH = 0x10
+#if HARVARD
+    ROM (x!rw) : ORIGIN = 0x00000000, LENGTH = 0x4000
+    RAM (rw!x) : ORIGIN = 0x00004000, LENGTH = 0x4000
+#else
+    MEM (rwx)  : ORIGIN = 0x00000000, LENGTH = 0x8000
+#endif
 }
 
 SECTIONS
 {
-  .text           :
-  {
-      *(.boot)
-    *(.text.unlikely .text.unlikely.*)
-    *(.text.startup .text.startup.*)
-    *(.text .text.*)
-    *(.gnu.linkonce.t.*)
-  } >ram
+    .text :
+    {
+        _text = .;
+        *(.boot)
+        *(.text)
+        *(.text.*)
+         _etext = .;
+#if HARVARD
+    } > ROM
+#else
+    } > MEM
+#endif
+    .data :
+    {
+        _data = .;
+        *(.rodata*)
+        *(.data)
+        _global = . + 0x800;
+        *(.sbss)    
+        *(.bss)
+        *(.sdata)
+        _edata = .;
 
-  .fini           :
-  {
-    KEEP (*(SORT_NONE(.fini)))
-  } >ram
+#if HARVARD
+    } > RAM
 
-  .rodata         :
-  {
-    *(.rdata)
-    *(.rodata .rodata.*)
-    *(.gnu.linkonce.r.*)
-  } >ram
+   PROVIDE ( _stack = ORIGIN(RAM) + LENGTH(RAM) );
 
+#else
+    } > MEM
 
-  .preinit_array  :
-  {
-    PROVIDE_HIDDEN (__preinit_array_start = .);
-    KEEP (*(.preinit_array))
-    PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >ram
+   PROVIDE ( _stack = ORIGIN(MEM) + LENGTH(MEM) );
+#endif
 
-  .init_array     :
-  {
-    PROVIDE_HIDDEN (__init_array_start = .);
-    KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
-    KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
-    PROVIDE_HIDDEN (__init_array_end = .);
-  } >ram
-
-  .fini_array     :
-  {
-    PROVIDE_HIDDEN (__fini_array_start = .);
-    KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
-    KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
-    PROVIDE_HIDDEN (__fini_array_end = .);
-  } >ram
-
-  .ctors          :
-  {
-    KEEP (*crtbegin.o(.ctors))
-    KEEP (*crtbegin?.o(.ctors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
-    KEEP (*(SORT(.ctors.*)))
-    KEEP (*(.ctors))
-  } >ram
-
-  .dtors          :
-  {
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*crtbegin?.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
-    KEEP (*(SORT(.dtors.*)))
-    KEEP (*(.dtors))
-  } >ram
-
-  .data          :
-  {
-    *(.data .data.*)
-    *(.gnu.linkonce.d.*)
-   _global = . + 0x800;
-    *(.sdata .sdata.*)
-    *(.gnu.linkonce.s.*)
-    *(.srodata.cst16)
-    *(.srodata.cst8)
-    *(.srodata.cst4)
-    *(.srodata.cst2)
-    *(.srodata .srodata.*)
-  } >ram
-
-  .bss            :
-  {
-    *(.sbss*)
-    *(.gnu.linkonce.sb.*)
-    *(.bss .bss.*)
-    *(.gnu.linkonce.b.*)
-    *(COMMON)
-  } >ram
-  
-  PROVIDE (_stack = ORIGIN(ram) + LENGTH(ram));
-  .io : { ./include/io.o(COMMON)} > IO
+    .io : { ./include/io.o(COMMON) } > IO
 }

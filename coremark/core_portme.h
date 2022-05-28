@@ -15,6 +15,9 @@ limitations under the License.
 
 Original Author: Shay Gal-on
 */
+
+#include <stddef.h>
+
 /* Topic : Description
         This file contains configuration constants required to execute on
    different platforms

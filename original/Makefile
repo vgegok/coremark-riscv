@@ -75,7 +75,7 @@ ifdef HARVARD
 endif
 
 OCFLAGS = -O binary # --reverse-bytes=4 # workaround for darkriscv big-endian blockrams
-ODFLAGS = -d
+ODFLAGS = -D
 
 PROJ = darksocv
 OBJS = main.o ../common/stdio.o ../common/io.o ../common/banner.o ../common/boot.o
@@ -98,7 +98,7 @@ all: $(TARGETS) $(DEPS)
 	@echo sources ok.
 
 clean:
-	-rm $(ASMS) $(OBJS) $(PROJ).{bin,lst,map,ram,rom,x86,text,data,bin,ld,o,mem,ram.mem,rom.mem}
+	-rm $(ASMS) $(OBJS) $(PROJ).{S,bin,lst,map,ram,rom,x86,text,data,bin,ld,o,mem,ram.mem,rom.mem}
 
 %.o: %.s Makefile
 	$(AS) $(ASFLAGS) -c $< -o $@
@@ -111,7 +111,7 @@ $(PROJ).ld: $(PROJ).lds
 	
 $(PROJ).o: $(OBJS) $(PROJ).ld
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
-	$(OD) $(ODFLAGS) $@ > $(PROJ).lst
+	$(OD) $(ODFLAGS) $@ > $(PROJ).S
 
 $(PROJ).rom.mem: $(PROJ).o
 	$(OC) $(OCFLAGS) $< $(PROJ).text --only-section .*text* 

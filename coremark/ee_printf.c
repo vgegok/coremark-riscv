@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+#include <io.h>
 #include <coremark.h>
 #include <stdarg.h>
 
@@ -662,7 +662,15 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 void
 uart_send_char(char c)
 {
-#error "You must implement the method uart_send_char to use this file!\n";
+    if(c=='\n')
+    {
+        while(io.uart.stat&1); // uart busy, wait...
+    io.uart.fifo = '\r';  
+    }
+    
+    while(io.uart.stat&1); // uart busy, wait...
+    io.uart.fifo = c;
+// #error "You must implement the method uart_send_char to use this file!\n";
     /*	Output of a char to a UART usually follows the following model:
             Wait until UART is ready
             Write char to UART
